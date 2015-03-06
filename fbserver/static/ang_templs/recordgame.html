@@ -1,0 +1,59 @@
+<div class="container-fluid">
+    <h2>Enter a game's players and score</h2>
+
+    <div class="row">
+        <div class="col-xs-4">
+            Yellow Team
+            <ul>
+                <li ng-repeat="player in yellowPlayers">
+                    [[player.name]]
+                    [<a href ng-click="restore(yellowPlayers, player)">X</a>]
+                </li>
+            </ul>
+            Score
+            <select class="form-control" ng-model="yellowScore" required
+                    ng-options="v for v in scoreAmts">
+            </select>
+        </div>
+        <div class="col-xs-4">
+            Available Players
+            <select multiple class="form-control" style="height: 200px"
+                    ng-model="availablePlayers"
+                    ng-options="player.name for player in players">
+            </select>
+            <br/>
+
+            <div class="text-center">
+                <button type="button" class="btn btn-default btn-sm"
+                        ng-click="move('left')">
+                    <span class="glyphicon glyphicon-arrow-left"></span>
+                </button>
+                <button type="button" class="btn btn-default btn-sm"
+                        ng-click="move('right')">
+                    <span class="glyphicon glyphicon-arrow-right"></span>
+                </button>
+                <br/>
+                <button type="button" class="btn btn-primary"
+                        style="margin: 5px 0;" ng-click="submit()">
+                    Submit
+                </button>
+                <div class="alert alert-warning" ng-show="alert_txt">
+                    <strong>Warning!</strong> [[alert_txt]]
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-4">
+            Black Team
+            <ul>
+                <li ng-repeat="player in blackPlayers">
+                    [[player.name]]
+                    [<a href ng-click="restore(blackPlayers, player)">X</a>]
+                </li>
+            </ul>
+            Score
+            <select class="form-control" ng-model="blackScore" required
+                    ng-options="v for v in scoreAmts">
+            </select>
+        </div>
+    </div>
+</div>

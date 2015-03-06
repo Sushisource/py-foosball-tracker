@@ -1,0 +1,6 @@
+venv/
+.idea/
+fbserver/static/js/controllers.js
+fbserver/static/js/controllers.js.map
+fbserver/static/js/services.js
+fbserver/static/js/services.js.map

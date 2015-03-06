@@ -1,0 +1,23 @@
+<div class="container-fluid">
+    <h2>Login</h2>
+
+    <form>
+        <fieldset>
+            <label>Available Players:</label>
+            <select class="form-control"
+                    ng-model="selectedPlayer"
+                    required
+                    ng-options="player.name for player in players track by player.id">
+            </select>
+            <br/>
+            <button type="submit" class="btn btn-primary"
+                    ng-click="login()">Login
+            </button>
+            <div class="alert" style="margin-top: 10px;"
+                 ng-show="result">[[ result ]]
+            </div>
+        </fieldset>
+    </form>
+    <br/>
+    <a href="/#/newplayer" class="btn btn-info">Create new player</a>
+</div>
