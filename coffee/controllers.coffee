@@ -109,9 +109,10 @@ foosball.controller 'RecGameCtrl', ($scope, $location, FoosballData,
 
 foosball.controller 'LoginCtrl', ($scope, $location, $http, FoosballData,
                                   LoginSvc, Player) ->
-  $scope.players = Player.get({}, (returned) ->
+  Player.get({}, (returned) ->
     # Set a default selection in the dropdown once we've loaded players
-    $scope.selectedPlayer = returned[0]
+    $scope.players = returned.players
+    $scope.selectedPlayer = $scope.players[0]
   )
 
   $scope.login = ->

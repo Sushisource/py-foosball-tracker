@@ -1,7 +1,26 @@
 from fbserver.database import db
 
 
-class PlayerGame(db.Model):  # Association table
+class Serializeable(object):
+    # Add in serialization
+    @property
+    def json(self):
+        return dict(self.todict())
+
+    def todict(self):
+        def convert_datetime(value):
+            return calendar.timegm(value.utctimetuple())
+
+        for c in self.__table__.columns:
+            if isinstance(c.type, db.DateTime):
+                value = convert_datetime(getattr(self, c.name))
+            else:
+                value = getattr(self, c.name)
+
+            yield (c.name, value)
+
+
+class PlayerGame(db.Model, Serializeable):  # Association table
     __tablename__ = "player_games"
     id = db.Column(db.Integer, primary_key=True)
     team = db.Column(db.String, nullable=False)
@@ -12,7 +31,7 @@ class PlayerGame(db.Model):  # Association table
     scores = db.relationship("Score", backref="player_game")
 
 
-class Game(db.Model):
+class Game(db.Model, Serializeable):
     __tablename__ = "games"
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime)
@@ -24,7 +43,7 @@ class Game(db.Model):
     player_games = db.relationship("PlayerGame", backref="game")
 
 
-class HistoricalGame(db.Model):
+class HistoricalGame(db.Model, Serializeable):
     __tablename__ = "historical_games"
     id = db.Column(db.Integer, primary_key=True)
     winscore = db.Column(db.Integer, nullable=False)
@@ -34,19 +53,19 @@ class HistoricalGame(db.Model):
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'))
 
 
-class Player(db.Model):
+class Player(db.Model, Serializeable):
     __tablename__ = "players"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
 
 
-class Score(db.Model):
+class Score(db.Model, Serializeable):
     __tablename__ = "scores"
     id = db.Column(db.Integer, primary_key=True)
     player_game_id = db.Column(db.ForeignKey('player_games.id'))
 
 
-class Card(db.Model):
+class Card(db.Model, Serializeable):
     __tablename__ = "cards"
     id = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.String(length=12), unique=True, nullable=False)
@@ -54,7 +73,7 @@ class Card(db.Model):
     entity_id = db.Column(db.Integer)
 
 
-class CardType(db.Model):
+class CardType(db.Model, Serializeable):
     __tablename__ = "card_types"
     id = db.Column(db.Integer, primary_key=True)
     card_type = db.Column(db.String, nullable=False, unique=True)

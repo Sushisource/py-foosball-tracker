@@ -41,7 +41,7 @@ class HistoricalGameList(Resource):
 
 class PlayerList(Resource):
     def get(self):
-        return {'players': Player.query.all()}
+        return {'players': [p.json for p in Player.query.all()]}
 
     def post(self):
         args = login_parser.parse_args()
