@@ -8,14 +8,8 @@ class Serializeable(object):
         return dict(self.todict())
 
     def todict(self):
-        def convert_datetime(value):
-            return calendar.timegm(value.utctimetuple())
-
         for c in self.__table__.columns:
-            if isinstance(c.type, db.DateTime):
-                value = convert_datetime(getattr(self, c.name))
-            else:
-                value = getattr(self, c.name)
+            value = getattr(self, c.name)
 
             yield (c.name, value)
 
@@ -34,7 +28,7 @@ class PlayerGame(db.Model, Serializeable):  # Association table
 class Game(db.Model, Serializeable):
     __tablename__ = "games"
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime)
+    date = db.Column(db.DateTime, nullable=False)
     inprog = db.Column(db.Boolean)
     historical = db.Column(db.Boolean)
 

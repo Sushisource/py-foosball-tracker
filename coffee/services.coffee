@@ -25,7 +25,7 @@ services.factory "HistoricalGame", ($resource) ->
 services.factory "LoginSvc", ($location) ->
   name = () -> return localStorage.getItem("playername")
   id = () -> return localStorage.getItem("playerid")
-  if name() is null or id() is null
+  if name is null or id is null
     name = "SOMEHOW YOU AREN'T LOGGED IN WHAT THE FUCK"
     $location.path "/login"
 
