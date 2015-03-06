@@ -127,13 +127,3 @@ foosball.controller 'LoginCtrl', ($scope, $location, $http, FoosballData,
         $scope.result = "Username already taken, try another"
       else
         LoginSvc.login(data.player['name'], data.player['id'])
-
-#    $http(method: "POST", url: "/login", data: "loginName=" + $scope.uname
-#    ).success((data, status, headers, config) ->
-#      $scope.uid = data.player['id']
-#      if data.exists is true
-#        $scope.result = "Username already taken, try another"
-#      else
-#        LoginSvc.login(data.player['name'], data.player['id'])
-#    ).error (data, status, headers, config) ->
-#      $scope.result = "Error logging in: #{data}"

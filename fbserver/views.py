@@ -1,7 +1,8 @@
 from fbserver import app
-from flask import render_template
+from flask import render_template, jsonify
 from flask.ext.restful import Resource, Api, reqparse
 from fbserver.database import Game, Player, db
+import datetime
 
 api = Api(app)
 parser = reqparse.RequestParser()
@@ -25,23 +26,28 @@ class GameR(Resource):
 class GameList(Resource):
     def get(self):
         args = parser.parse_args()
-        print(args)
-        games = Game.query.all()
-        return {'games': games}
+        inprog = args['inprog']
+        print(inprog)
+        games = Game.query.filter_by(inprog=inprog).all()
+        return jsonify({'games': games})
 
     def post(self):
         args = parser.parse_args()
+        inprog = args.get('inprog', False)
+        nugame = Game(inprog=inprog, date=datetime.datetime.now())
+        db.session.add(nugame)
+        db.session.commit()
+        return jsonify({'game': nugame})
 
 
 class HistoricalGameList(Resource):
     def post(self):
         args = parser.parse_args()
-        print(args)
 
 
 class PlayerList(Resource):
     def get(self):
-        return {'players': [p.json for p in Player.query.all()]}
+        return jsonify({'players': Player.query.all()})
 
     def post(self):
         args = login_parser.parse_args()
@@ -51,9 +57,9 @@ class PlayerList(Resource):
             nuplayer = Player(name=name)
             db.session.add(nuplayer)
             db.session.commit()
-            return {'player': nuplayer.json}
+            return jsonify({'player': nuplayer})
         else:
-            return {'exists': True, 'player': existing_player.json}
+            return jsonify({'exists': True, 'player': existing_player})
 
 
 api.add_resource(GameR, '/games/<game_id>')
