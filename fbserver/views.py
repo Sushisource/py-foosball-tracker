@@ -9,7 +9,7 @@ parser.add_argument('limit', type=int)
 parser.add_argument('inprog', type=str)
 
 login_parser = parser.copy()
-login_parser.add_argument('loginName', type='str', required=True)
+login_parser.add_argument('loginName', type=str, required=True)
 
 
 @app.route('/')
@@ -45,12 +45,15 @@ class PlayerList(Resource):
 
     def post(self):
         args = login_parser.parse_args()
-        print(args)
         name = args['loginName']
-        if not Player.query.filter_by(name=name).first():
+        existing_player = Player.query.filter_by(name=name).first()
+        if not existing_player:
             nuplayer = Player(name=name)
             db.session.add(nuplayer)
             db.session.commit()
+            return {'player': nuplayer.json}
+        else:
+            return {'exists': True, 'player': existing_player.json}
 
 
 api.add_resource(GameR, '/games/<game_id>')
