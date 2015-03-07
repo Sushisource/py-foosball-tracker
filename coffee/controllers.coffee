@@ -20,8 +20,8 @@ foosball.controller 'WelcomeCtrl',
     $scope.startjoin = (game) ->
       $scope.curgame = game
       PlayerGame.get
-        fb_game_id: game.id
-        fb_player_id: $scope.playerid
+        game_id: game.id
+        player_id: $scope.playerid
       , (pgames) ->
         if not pgames.team?
           $("#teammodal").modal("show")
@@ -31,8 +31,8 @@ foosball.controller 'WelcomeCtrl',
     $scope.join = (team) ->
       PlayerGame.save
         team: team,
-        fb_game_id: $scope.curgame.id,
-        fb_player_id: $scope.playerid
+        game_id: $scope.curgame.id,
+        player_id: $scope.playerid
       , ->
         # This timeout is here so that the modal has time to fade out
         $timeout ->
@@ -43,9 +43,9 @@ foosball.controller 'WelcomeCtrl',
     $scope.newgame = () ->
       Game.save
         inprog: true
-      , (nugame) ->
+      , (data) ->
         update_games()
-        $scope.startjoin(nugame)
+        $scope.startjoin(data.game)
     # For recording an already plated game
     $scope.recordgame = () ->
       $location.path("/recgame")
