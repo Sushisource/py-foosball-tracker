@@ -17,6 +17,9 @@ pgame_parser.add_argument('game_id', type=int, required=True)
 pgame_parser.add_argument('player_id', type=int, required=True)
 pgame_parser.add_argument('team', type=str)
 
+card_event_parser = parser.copy()
+card_event_parser.add_argument('card_id', type=str, required=True)
+card_event_parser.add_argument('card_type', type=str, required=True)
 
 @app.route('/')
 def index():
@@ -92,9 +95,18 @@ class PlayerGameList(Resource):
         db.session.commit()
 
 
+class CardEventEndpoint(Resource):
+    # Non-functioning
+    def post(self):
+        args = card_event_parser.parse_args()
+        print(args)
+        print("Card Event: {card_id}/{card_type}".format(**args))
+        return {'status': 'ok'}
+
 api.add_resource(GameR, '/games/<game_id>')
 api.add_resource(GameList, '/games')
 api.add_resource(HistoricalGameList, '/historical_games')
 api.add_resource(PlayerList, '/players')
 api.add_resource(PlayerGameList, '/player_games')
 api.add_resource(PlayerGameR, '/player_games/<pgid>')
+api.add_resource(CardEventEndpoint, '/card')
