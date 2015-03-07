@@ -4,7 +4,6 @@ from flask.ext.restful import Resource, Api, reqparse
 from fbserver.database import Game, Player, db, PlayerGame
 import datetime
 
-
 api = Api(app)
 parser = reqparse.RequestParser()
 parser.add_argument('limit', type=int)
@@ -76,7 +75,6 @@ class PlayerGameR(Resource):
         return jsonify(pgame)
 
 
-
 class PlayerGameList(Resource):
     def get(self):
         args = pgame_parser.parse_args()
@@ -96,6 +94,7 @@ class PlayerGameList(Resource):
         db.session.add(pgame)
         db.session.commit()
 
+
 class CardEventEndpoint(Resource):
     # Non-functioning
     def post(self):
@@ -103,7 +102,7 @@ class CardEventEndpoint(Resource):
         print(args)
         print("Card Event: {card_id}/{card_type}".format(**args))
         return {'status': 'ok'}
-		
+
 api.add_resource(GameR, '/games/<game_id>')
 api.add_resource(GameList, '/games')
 api.add_resource(HistoricalGameList, '/historical_games')
