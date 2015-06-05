@@ -72,7 +72,7 @@ class PlayerList(Resource):
 class PlayerGameR(Resource):
     def get(self, pgid):
         pgame = PlayerGame.query.filter_by(id=pgid).first_or_404()
-        return jsonify(pgame)
+        return jsonify({pgame})
 
 
 class PlayerGameList(Resource):
@@ -82,7 +82,7 @@ class PlayerGameList(Resource):
             player_id=args['player_id'],
             game_id=args['game_id']).first()
         if pgame:
-            return jsonify(pgame)
+            return jsonify({'player_game': pgame})
         else:
             return {}
 
