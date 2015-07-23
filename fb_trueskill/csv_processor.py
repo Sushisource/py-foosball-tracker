@@ -37,6 +37,9 @@ if __name__ == "__main__":
         ranker.add_player(player)
 
     for record in csvp.records:
+        if len(record) == 2:
+            ranker.process_game_record([record[0].strip()], [record[1].strip()])
+            continue
         t1 = [record[0].strip(), record[1].strip()]
         t2 = [record[2].strip(), record[3].strip()]
         ranker.process_game_record(t1, t2)
