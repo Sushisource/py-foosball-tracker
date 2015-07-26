@@ -67,3 +67,9 @@
     font-size: 18px;
     padding: 3px;
 }
+
+.playerItem label {
+    font-size: 20px;
+    margin-right: 10px;
+    margin-top: 5px;
+}

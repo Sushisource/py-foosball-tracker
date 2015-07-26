@@ -25,6 +25,10 @@ card_event_parser.add_argument('card_type', type=str, required=True)
 def index():
     return render_template('index.html')
 
+@app.route('/elm')
+def elm_index():
+    return render_template('elm_ix.html')
+
 
 class GameR(Resource):
     def get(self, game_id):

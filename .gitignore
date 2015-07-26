@@ -1,7 +1,9 @@
 venv/
 .idea/
 fbserver/static/js/controllers.js
-fbserver/static/js/controllers.js.map
+fbserver/static/js/controllers.map
 fbserver/static/js/services.js
-fbserver/static/js/services.js.map
+fbserver/static/js/services.map
+fbserver/static/js/game_saver.js
 *.pyc
+elm/elm-stuff/
