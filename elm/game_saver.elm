@@ -26,14 +26,16 @@ type alias Player =
     { name : String
     , editing : Bool
     , id : Int
+    , winner : Bool
     }
 
 
-newTask : String -> Int -> Player
-newTask pname id =
+newPlayer : String -> Int -> Bool -> Player
+newPlayer pname id isWin =
     { name = pname
     , editing = False
     , id = id
+    , winner = isWin
     }
 
 emptyModel : Model
@@ -41,7 +43,7 @@ emptyModel =
     { players = []
     , visibility = "All"
     , field = ""
-    , uid = 0
+    , uid = 1
     }
 
 -- UPDATE
@@ -56,34 +58,42 @@ type Action = NoOp |
 -- How we update our Model on a given Action?
 update : Action -> Model -> Model
 update action model =
+    let mod = if action == Add then 1 else -1
+        winMark = ((List.length model.players) + mod)//2
+        assignWinners = (\i p -> {p | winner <- i < winMark})
+    in
     case action of
       NoOp -> model
 
       Add ->
+          let playersPlusAdd = if String.isEmpty model.field
+                                 then model.players
+                                 else model.players ++ [newPlayer model.field model.uid False]
+              nuPlayers = List.indexedMap assignWinners playersPlusAdd
+          in
           { model |
               uid <- model.uid + 1,
               field <- "",
-              players <-
-                  if String.isEmpty model.field
-                    then model.players
-                    else model.players ++ [newTask model.field model.uid]
+              players <- nuPlayers
           }
 
       UpdateField str ->
           { model | field <- str }
 
       EditingPlayer id isEditing ->
-          let updateTask t = if t.id == id then { t | editing <- isEditing } else t
+          let updatePlayer t = if t.id == id then { t | editing <- isEditing }
+                                             else t
           in
-              { model | players <- List.map updateTask model.players }
+              { model | players <- List.map updatePlayer model.players }
 
       UpdatePlayer id player ->
-          let updateTask t = if t.id == id then { t | name <- player } else t
+          let updatePlayer t = if t.id == id then { t | name <- player } else t
           in
-              { model | players <- List.map updateTask model.players }
+              { model | players <- List.map updatePlayer model.players }
 
       Delete id ->
-          { model | players <- List.filter (\t -> t.id /= id) model.players }
+          { model | players <- List.indexedMap assignWinners
+                                (List.filter (\t -> t.id /= id) model.players) }
 
 -- VIEW
 view : Address Action -> Model -> Html
@@ -92,22 +102,32 @@ view address model =
       [ class "fbrec-wrapper" ]
       [ section
           [ id "fb_record" ]
-          [ lazy2 playerEntry address model.field
+          [ lazy3 playerEntry address model.field ((List.length model.players)+1)
           , lazy2 playerList address model.players
           ]
       ]
 
 
-playerEntry : Address Action -> String -> Html
-playerEntry address player =
+playerEntry : Address Action -> String -> Int -> Html
+playerEntry address player nextPnum =
+    let isDisabled = nextPnum >= 5
+        pholder = if isDisabled then "Max Players" else
+                   "Enter player " ++ toString nextPnum ++ " name"
+        gameName = case nextPnum - 1 of
+                     2 -> "1v1"
+                     3 -> "King of the Hill"
+                     4 -> "2v2"
+                     _ -> "Enter a player name"
+    in
     header
         [ id "header" ]
-        [ h1 [] [ text "Player Entry" ]
+        [ h1 [] [ text gameName ]
         , input
             [ id "new-player"
-            , placeholder "Enter player name"
+            , placeholder pholder
             , autofocus True
             , value player
+            , disabled isDisabled
             , name "newPlayer"
             , on "input" targetValue (Signal.message address << UpdateField)
             , onEnter address Add
@@ -119,18 +139,22 @@ playerList : Address Action -> List Player -> Html
 playerList addr players =
     section
       [ id "main" ]
-      [ ul [ id "player-list" ] (List.map (playerItem addr) players) ]
+      [ ul [ id "player-list", class "list-group" ]
+           (List.indexedMap (playerItem addr) players) ]
 
-playerItem : Address Action -> Player -> Html
-playerItem addr playa =
+playerItem : Address Action -> Int -> Player -> Html
+playerItem addr pnum playa =
     li
-      [ classList [("editing", playa.editing)] ]
+      [ classList [("editing", playa.editing),
+                   ("list-group-item-success", playa.winner),
+                   ("list-group-item-danger", not playa.winner),
+                   ("list-group-item", True)]]
       [ div
           [ class "playerItem" ]
           [ label
               [ onDoubleClick addr (EditingPlayer playa.id True) ]
-              [ text playa.name ]
-          , button [ class "btn btn-danger",
+              [ text ("Player " ++ toString (pnum+1) ++ ": " ++ playa.name) ]
+          , button [ class "btn btn-danger closebutton",
                      onClick addr (Delete playa.id) ]
           [ span [class "glyphicon glyphicon-remove",
                  property "aria-hidden" (Json.Encode.string "true")]

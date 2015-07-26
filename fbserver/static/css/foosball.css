@@ -69,7 +69,31 @@
 }
 
 .playerItem label {
-    font-size: 20px;
+    font-size: 35px;
     margin-right: 10px;
     margin-top: 5px;
+    display: block;
+}
+
+#player-list {
+    list-style: outside none none;
+    padding: 0;
+}
+
+#player-list li {
+    position: relative;
+}
+
+#new-player {
+    width: 100%;
+    margin-bottom: 5px;
+    font-size: 35px;
+}
+
+.closebutton {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 15%;
 }
