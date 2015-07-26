@@ -4,14 +4,6 @@ from __future__ import with_statement
 from fabric.api import run, env, cd, put, lcd, local, settings
 import time
 
-env.user = "local-admin"
-env.hosts = ["10.32.136.5"]
-
-
-def package():
-    with lcd(".."):
-        local("mvn package")
-
 
 def install_docker():
     run("wget -qO- https://get.docker.com/ | sh")
@@ -25,12 +17,12 @@ def deploy():
         run("git pull")
         with cd("ops"):
             run("docker build -t fb-tracker/app .")
-            run("docker build -t fb-tracker/pgsql postgres")
         # Run everything TODO: Probably don't just brutally end running
         # containers.
         with settings(warn_only=True):
             run("docker rm -f pgsql")
-        run("docker run -d -P --name pgsql fb-tracker/pgsql")
+        run("docker run --name pgsql -d -e DB_NAME=fbdb -e DB_USER=foosball "
+            "-e DB_PASS=foosball sameersbn/postgresql:9.4-2")
 
         # Gotta wait a sec to give postgres a minute to finish starting.
         time.sleep(3)
@@ -38,7 +30,3 @@ def deploy():
             run("docker rm -f fb-tracker-app")
         run("docker run -d -p 80:8080 -p 8081:8081 --link pgsql:pgsql --name "
             "fb-tracker-app tableau/cat")
-
-
-def deploy_prod():
-    deploy("cat-config.yml")

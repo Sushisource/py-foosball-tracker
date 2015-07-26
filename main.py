@@ -15,7 +15,7 @@ def main():
     if args.cmd == "db" and args.db_cmd == "create":
         database.create_all()
     elif args.cmd == "run":
-        app.run(debug=True)
+        app.run(host='127.0.0.1', debug=True)
 
 
 if __name__ == "__main__":

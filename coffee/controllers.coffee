@@ -69,14 +69,16 @@ foosball.controller 'GameCtrl',
       , ->
         $scope.result = "Error saving score"
 
-foosball.controller 'RecGameCtrl', ($scope, $location, FoosballData,
+foosball.controller 'RecGameCtrl', ($scope, $location, Player,
                                     HistoricalGame) ->
   $scope.yellowPlayers = []
   $scope.blackPlayers = []
   $scope.scoreAmts = [1..8]
-  $scope.players = FoosballData.query(model: "fb_player")
+  Player.get({}, (returned) ->
+    $scope.players = returned.players
+  )
   pushr = (dest) ->
-    for player in $scope.availablePlayers
+    for player in $scope.players
       if player not in $scope.yellowPlayers && player not in $scope.blackPlayers
         if dest.length < 2
           dest.push(player)
