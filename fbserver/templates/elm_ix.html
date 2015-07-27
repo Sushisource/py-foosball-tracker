@@ -24,6 +24,11 @@
     var div = document.getElementById('gamerec');
 
     var startingState = null;
-    var todomvc = Elm.embed(Elm.GameSaver, div, {getStorage: startingState});
+    var gamerecmvc = Elm.embed(Elm.GameSaver, div, {wipeModel: false});
+    gamerecmvc.ports.setStorage.subscribe(function(state) {
+        console.log(JSON.stringify(state));
+        gamerecmvc.ports.wipeModel.send(true);
+    });
+
 </script>
 </html>

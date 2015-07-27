@@ -8,17 +8,17 @@ import Html.Events exposing (..)
 import Html.Lazy exposing (lazy, lazy2, lazy3)
 import Http
 import Json.Decode as Json exposing ((:=))
-import Json.Encode
+import Json.Encode as Encode
 import String
 import Task exposing (..)
-import Signal exposing (Signal, Address)
+import Signal exposing (Signal, Address, (<~))
 
 ---- MODEL ----
 type alias Model =
     { players : List Player
     , field : String
     , uid : Int
-    , visibility : String
+    , saveThis : Bool
     }
 
 
@@ -28,6 +28,9 @@ type alias Player =
     , id : Int
     , winner : Bool
     }
+
+encodePlayer : Player -> Encode.Value
+encodePlayer p = Encode.object [ ("name", Encode.string p.name) ]
 
 
 newPlayer : String -> Int -> Bool -> Player
@@ -41,7 +44,7 @@ newPlayer pname id isWin =
 emptyModel : Model
 emptyModel =
     { players = []
-    , visibility = "All"
+    , saveThis = False
     , field = ""
     , uid = 1
     }
@@ -53,7 +56,9 @@ type Action = NoOp |
               Delete Int |
               DeleteComplete |
               EditingPlayer Int Bool |
-              UpdatePlayer Int String
+              UpdatePlayer Int String |
+              SaveGame |
+              Clear Bool
 
 -- How we update our Model on a given Action?
 update : Action -> Model -> Model
@@ -95,6 +100,16 @@ update action model =
           { model | players <- List.indexedMap assignWinners
                                 (List.filter (\t -> t.id /= id) model.players) }
 
+      SaveGame ->
+          let encodedPlist =
+                  Encode.encode 0
+                    (Encode.object [ ("players",
+                     Encode.list (List.map encodePlayer model.players) ) ])
+          in
+          { model | saveThis <- True }
+
+      Clear b -> if b then emptyModel else model
+
 -- VIEW
 view : Address Action -> Model -> Html
 view address model =
@@ -104,6 +119,12 @@ view address model =
           [ id "fb_record" ]
           [ lazy3 playerEntry address model.field ((List.length model.players)+1)
           , lazy2 playerList address model.players
+          , footer [] [ button [ id "savegame",
+                                 classList [("btn btn-success btn-lg", True),
+                                            ("disabled", (List.length model.players) <= 1)],
+                                 onClick address SaveGame
+                               ]
+                        [text "Save Game!"] ]
           ]
       ]
 
@@ -157,7 +178,7 @@ playerItem addr pnum playa =
           , button [ class "btn btn-danger closebutton",
                      onClick addr (Delete playa.id) ]
           [ span [class "glyphicon glyphicon-remove",
-                 property "aria-hidden" (Json.Encode.string "true")]
+                 property "aria-hidden" (Encode.string "true")]
            []
           ]
           ]
@@ -180,27 +201,37 @@ is13 code =
 -- wire the entire application together
 main : Signal Html
 main =
-  Signal.map (view actions.address) model
+  (view actions.address) <~ modelSig
 
 
 -- manage the model of our application over time
-model : Signal Model
-model =
-  Signal.foldp update initialModel actions.signal
-
-
-initialModel : Model
-initialModel =
-  Maybe.withDefault emptyModel getStorage
-
+modelSig : Signal Model
+modelSig =
+  Signal.foldp update emptyModel (Signal.merge actions.signal (Clear <~ wipeModel))
 
 -- actions from user input
 actions : Signal.Mailbox Action
 actions =
   Signal.mailbox NoOp
 
--- interactions with server to save the model
-port getStorage : Maybe Model
+-- Mailbox for when we want to save
+saver : Signal.Mailbox String
+saver = Signal.mailbox ""
 
+-- interactions with server to save the model
+-- Only save when we have something to save.
 port setStorage : Signal Model
-port setStorage = model
+port setStorage = Signal.filter (\m -> m.saveThis) emptyModel modelSig
+
+-- We'll have JS send us a signal back when it's OK to wipe the model on save
+port wipeModel : Signal Bool
+
+-- POSTing JSON
+places : Json.Decoder (List String)
+places =
+  let place =
+        Json.object2 (\city state -> city ++ ", " ++ state)
+          ("place name" := Json.string)
+          ("state" := Json.string)
+  in
+      "places" := Json.list place

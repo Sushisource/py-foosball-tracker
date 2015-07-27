@@ -40,8 +40,8 @@ class Game(db.Model, Serializeable):
 class HistoricalGame(db.Model, Serializeable):
     __tablename__ = "historical_games"
     id = db.Column(db.Integer, primary_key=True)
-    winscore = db.Column(db.Integer, nullable=False)
-    loserscore = db.Column(db.Integer, nullable=False)
+    winscore = db.Column(db.Integer)
+    loserscore = db.Column(db.Integer)
     # Winteam should be the player name if this was a KotH game.
     winteam = db.Column(db.String, nullable=False)
 

@@ -21,6 +21,10 @@ card_event_parser = parser.copy()
 card_event_parser.add_argument('card_id', type=str, required=True)
 card_event_parser.add_argument('card_type', type=str, required=True)
 
+save_game_parser = parser.copy()
+# Order matters in this list - winners come first.
+save_game_parser.add_argument('player_list', type=list, required=True)
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -54,6 +58,8 @@ class GameList(Resource):
 class HistoricalGameList(Resource):
     def post(self):
         args = parser.parse_args()
+        plist = args['player_list']
+        print(plist)
 
 
 class PlayerList(Resource):
