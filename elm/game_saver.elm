@@ -17,7 +17,6 @@ import Signal exposing (Signal, Address, (<~))
 type alias Model =
     { players : List Player
     , field : String
-    , uid : Int
     , saveThis : Bool
     }
 
@@ -25,7 +24,7 @@ type alias Model =
 type alias Player =
     { name : String
     , editing : Bool
-    , id : Int
+    , pnum : Int
     , winner : Bool
     }
 
@@ -34,10 +33,10 @@ encodePlayer p = Encode.object [ ("name", Encode.string p.name) ]
 
 
 newPlayer : String -> Int -> Bool -> Player
-newPlayer pname id isWin =
+newPlayer pname pnum isWin =
     { name = pname
     , editing = False
-    , id = id
+    , pnum = pnum
     , winner = isWin
     }
 
@@ -46,7 +45,6 @@ emptyModel =
     { players = []
     , saveThis = False
     , field = ""
-    , uid = 1
     }
 
 -- UPDATE
@@ -64,7 +62,8 @@ type Action = NoOp |
 update : Action -> Model -> Model
 update action model =
     let mod = if action == Add then 1 else -1
-        winMark = ((List.length model.players) + mod)//2
+        plength = List.length model.players
+        winMark = (plength + mod)//2
         assignWinners = (\i p -> {p | winner <- i < winMark})
     in
     case action of
@@ -73,11 +72,10 @@ update action model =
       Add ->
           let playersPlusAdd = if String.isEmpty model.field
                                  then model.players
-                                 else model.players ++ [newPlayer model.field model.uid False]
+                                 else model.players ++ [newPlayer model.field (plength+1) False]
               nuPlayers = List.indexedMap assignWinners playersPlusAdd
           in
           { model |
-              uid <- model.uid + 1,
               field <- "",
               players <- nuPlayers
           }
@@ -85,20 +83,20 @@ update action model =
       UpdateField str ->
           { model | field <- str }
 
-      EditingPlayer id isEditing ->
-          let updatePlayer t = if t.id == id then { t | editing <- isEditing }
+      EditingPlayer pnum isEditing ->
+          let updatePlayer t = if t.pnum == pnum then { t | editing <- isEditing }
                                              else t
           in
               { model | players <- List.map updatePlayer model.players }
 
-      UpdatePlayer id player ->
-          let updatePlayer t = if t.id == id then { t | name <- player } else t
+      UpdatePlayer pnum player ->
+          let updatePlayer t = if t.pnum == pnum then { t | name <- player } else t
           in
               { model | players <- List.map updatePlayer model.players }
 
-      Delete id ->
+      Delete pnum ->
           { model | players <- List.indexedMap assignWinners
-                                (List.filter (\t -> t.id /= id) model.players) }
+                                (List.filter (\t -> t.pnum/=pnum) model.players) }
 
       SaveGame ->
           let encodedPlist =
@@ -108,11 +106,13 @@ update action model =
           in
           { model | saveThis <- True }
 
-      Clear b -> if b then emptyModel else model
+      Clear b -> if b then emptyModel else { model | saveThis <- False }
 
 -- VIEW
 view : Address Action -> Model -> Html
 view address model =
+    let saveDisabled = (List.length model.players) <= 1
+    in
     div
       [ class "fbrec-wrapper" ]
       [ section
@@ -121,7 +121,8 @@ view address model =
           , lazy2 playerList address model.players
           , footer [] [ button [ id "savegame",
                                  classList [("btn btn-success btn-lg", True),
-                                            ("disabled", (List.length model.players) <= 1)],
+                                            ("disabled", saveDisabled)],
+                                 disabled saveDisabled,
                                  onClick address SaveGame
                                ]
                         [text "Save Game!"] ]
@@ -173,10 +174,10 @@ playerItem addr pnum playa =
       [ div
           [ class "playerItem" ]
           [ label
-              [ onDoubleClick addr (EditingPlayer playa.id True) ]
+              [ onDoubleClick addr (EditingPlayer playa.pnum True) ]
               [ text ("Player " ++ toString (pnum+1) ++ ": " ++ playa.name) ]
           , button [ class "btn btn-danger closebutton",
-                     onClick addr (Delete playa.id) ]
+                     onClick addr (Delete playa.pnum) ]
           [ span [class "glyphicon glyphicon-remove",
                  property "aria-hidden" (Encode.string "true")]
            []
@@ -225,13 +226,3 @@ port setStorage = Signal.filter (\m -> m.saveThis) emptyModel modelSig
 
 -- We'll have JS send us a signal back when it's OK to wipe the model on save
 port wipeModel : Signal Bool
-
--- POSTing JSON
-places : Json.Decoder (List String)
-places =
-  let place =
-        Json.object2 (\city state -> city ++ ", " ++ state)
-          ("place name" := Json.string)
-          ("state" := Json.string)
-  in
-      "places" := Json.list place

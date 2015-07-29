@@ -20,14 +20,22 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 <script src="/static/js/bootstrap/bootstrap.min.js"></script>
 <script type="text/javascript">
+    // JQuery is stupid, and doesn't respect the types provided in $.post
+    $.ajaxSetup({
+        contentType: "application/json; charset=utf-8"
+    });
     // get an empty <div>
     var div = document.getElementById('gamerec');
 
     var startingState = null;
     var gamerecmvc = Elm.embed(Elm.GameSaver, div, {wipeModel: false});
-    gamerecmvc.ports.setStorage.subscribe(function(state) {
+    gamerecmvc.ports.setStorage.subscribe(function (state) {
         console.log(JSON.stringify(state));
-        gamerecmvc.ports.wipeModel.send(true);
+        $.post("/historical_games",
+                JSON.stringify({"player_list": state.players}),
+                function (res) {
+                    gamerecmvc.ports.wipeModel.send(res.save);
+                }, 'json')
     });
 
 </script>

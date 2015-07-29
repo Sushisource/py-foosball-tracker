@@ -1,5 +1,5 @@
 from fbserver import app
-from flask import render_template, jsonify
+from flask import render_template, jsonify, request
 from flask.ext.restful import Resource, Api, reqparse
 from fbserver.database import Game, Player, db, PlayerGame
 import datetime
@@ -20,10 +20,6 @@ pgame_parser.add_argument('team', type=str)
 card_event_parser = parser.copy()
 card_event_parser.add_argument('card_id', type=str, required=True)
 card_event_parser.add_argument('card_type', type=str, required=True)
-
-save_game_parser = parser.copy()
-# Order matters in this list - winners come first.
-save_game_parser.add_argument('player_list', type=list, required=True)
 
 @app.route('/')
 def index():
@@ -57,9 +53,10 @@ class GameList(Resource):
 
 class HistoricalGameList(Resource):
     def post(self):
-        args = parser.parse_args()
-        plist = args['player_list']
+        plist = request.get_json()['player_list']
         print(plist)
+
+        return {'save': False}
 
 
 class PlayerList(Resource):

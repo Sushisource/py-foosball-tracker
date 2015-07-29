@@ -10,7 +10,11 @@ team.
 """
 import csv
 import sys
-from ranker import TotalRanking
+import os
+# No clue why python is being an asshole about this
+sys.path.append(os.getcwd())
+from fbcore import player_list_to_win_loss_tuple
+from fbcore.ranker import TotalRanking
 
 
 class CSVProcessor:
@@ -37,12 +41,9 @@ if __name__ == "__main__":
         ranker.add_player(player)
 
     for record in csvp.records:
-        if len(record) == 2:
-            ranker.process_game_record([record[0].strip()], [record[1].strip()])
-            continue
-        t1 = [record[0].strip(), record[1].strip()]
-        t2 = [record[2].strip(), record[3].strip()]
-        ranker.process_game_record(t1, t2)
+        wl_tup = player_list_to_win_loss_tuple(record)
+        print(wl_tup)
+        ranker.process_game_record(*wl_tup)
 
     print("Total games: {}".format(ranker.total_games))
     for player in ranker.player_rankings():
