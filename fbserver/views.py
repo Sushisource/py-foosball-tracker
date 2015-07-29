@@ -82,7 +82,7 @@ class HistoricalGameList(Resource):
 
         db.session.add_all(models)
         db.session.commit()
-        return {'save': True}
+        return {'msg': "Saved game: {}".format(game.json), 'saved': True}
 
 
 class PlayerList(Resource):

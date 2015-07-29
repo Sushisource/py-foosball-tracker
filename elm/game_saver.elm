@@ -18,6 +18,7 @@ type alias Model =
     { players : List Player
     , field : String
     , saveThis : Bool
+    , srvrMsg : String
     }
 
 
@@ -45,6 +46,7 @@ emptyModel =
     { players = []
     , saveThis = False
     , field = ""
+    , srvrMsg = ""
     }
 
 -- UPDATE
@@ -56,7 +58,7 @@ type Action = NoOp |
               EditingPlayer Int Bool |
               UpdatePlayer Int String |
               SaveGame |
-              Clear Bool
+              ServerResp String
 
 -- How we update our Model on a given Action?
 update : Action -> Model -> Model
@@ -106,12 +108,13 @@ update action model =
           in
           { model | saveThis <- True }
 
-      Clear b -> if b then emptyModel else { model | saveThis <- False }
+      ServerResp m -> if m /= "" then { emptyModel | srvrMsg <- m }
+                                 else { model | saveThis <- False }
 
 -- VIEW
 view : Address Action -> Model -> Html
 view address model =
-    let saveDisabled = (List.length model.players) <= 1
+    let saveDisabled = (List.length model.players) <= 1 || model.saveThis
     in
     div
       [ class "fbrec-wrapper" ]
@@ -125,7 +128,9 @@ view address model =
                                  disabled saveDisabled,
                                  onClick address SaveGame
                                ]
-                        [text "Save Game!"] ]
+                               [text "Save Game!"],
+                        div [ class "alert alert-info",
+                              hidden (model.srvrMsg == "") ] [text model.srvrMsg] ]
           ]
       ]
 
@@ -208,7 +213,8 @@ main =
 -- manage the model of our application over time
 modelSig : Signal Model
 modelSig =
-  Signal.foldp update emptyModel (Signal.merge actions.signal (Clear <~ wipeModel))
+  Signal.foldp update emptyModel (Signal.merge actions.signal
+                                               (ServerResp <~ serverPort))
 
 -- actions from user input
 actions : Signal.Mailbox Action
@@ -225,4 +231,4 @@ port setStorage : Signal Model
 port setStorage = Signal.filter (\m -> m.saveThis) emptyModel modelSig
 
 -- We'll have JS send us a signal back when it's OK to wipe the model on save
-port wipeModel : Signal Bool
+port serverPort : Signal String
