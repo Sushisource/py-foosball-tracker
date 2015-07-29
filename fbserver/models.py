@@ -36,6 +36,10 @@ class Game(db.Model, Serializeable):
                                       backref="game")
     player_games = db.relationship("PlayerGame", backref="game")
 
+    @property
+    def players(self):
+        return list(map(lambda pg: pg.player, self.player_games))
+
 
 class HistoricalGame(db.Model, Serializeable):
     __tablename__ = "historical_games"

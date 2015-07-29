@@ -36,14 +36,24 @@ def elm_index():
 
 class GameR(Resource):
     def get(self, game_id):
-        pass
+        game = Game.query.filter_by(id=game_id).first()
+        if game is None:
+            return 404
+        players = game.players
+        retthis = {'game': game, 'players': players}
+        if game.historical:
+            retthis['historical_game'] = game.historical_game
+        return jsonify(retthis)
 
 
 class GameList(Resource):
     def get(self):
         args = parser.parse_args()
         inprog = args['inprog']
-        games = Game.query.filter_by(inprog=inprog).all()
+        if inprog is not None:
+            games = Game.query.filter_by(inprog=inprog).all()
+        else:
+            games = Game.query.filter_by().all()
         return jsonify({'games': games})
 
     def post(self):
@@ -67,14 +77,12 @@ class HistoricalGameList(Resource):
             pmod = PlayerList.find_or_make_player(player['name'])
             models.append(pmod[0])
             team = "winners" if player['winner'] else "losers"
-            pgame = PlayerGame(player=pmod, game=game, team=team)
+            pgame = PlayerGame(player=pmod[0], game=game, team=team)
             models.append(pgame)
 
-        print(models)
         db.session.add_all(models)
         db.session.commit()
-
-        return {'save': False}
+        return {'save': True}
 
 
 class PlayerList(Resource):
@@ -83,6 +91,7 @@ class PlayerList(Resource):
 
     @staticmethod
     def find_or_make_player(name):
+        name = name.lower()
         existing_player = Player.query.filter_by(name=name).first()
         if existing_player:
             return existing_player, True
@@ -97,7 +106,7 @@ class PlayerList(Resource):
             db.session.commit()
             return jsonify({'player': player})
         else:
-            return jsonify({'exists': True, 'player': existing_player})
+            return jsonify({'exists': True, 'player': player})
 
 
 class PlayerGameR(Resource):
