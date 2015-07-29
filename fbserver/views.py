@@ -1,8 +1,10 @@
+import datetime
+
 from fbserver import app
 from flask import render_template, jsonify, request
 from flask.ext.restful import Resource, Api, reqparse
-from fbserver.database import Game, Player, db, PlayerGame
-import datetime
+from fbserver.database import Game, Player, db, PlayerGame, HistoricalGame
+from fbcore import player_list_to_win_loss_tuple
 
 api = Api(app)
 parser = reqparse.RequestParser()
@@ -21,9 +23,11 @@ card_event_parser = parser.copy()
 card_event_parser.add_argument('card_id', type=str, required=True)
 card_event_parser.add_argument('card_type', type=str, required=True)
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/elm')
 def elm_index():
@@ -54,7 +58,21 @@ class GameList(Resource):
 class HistoricalGameList(Resource):
     def post(self):
         plist = request.get_json()['player_list']
-        print(plist)
+
+        hgame = HistoricalGame(winteam="winners")
+        game = Game(date=datetime.datetime.now(), inprog=False, historical=True,
+                    historical_game=hgame)
+        models = [game, hgame]
+        for player in plist:
+            pmod = PlayerList.find_or_make_player(player['name'])
+            models.append(pmod[0])
+            team = "winners" if player['winner'] else "losers"
+            pgame = PlayerGame(player=pmod, game=game, team=team)
+            models.append(pgame)
+
+        print(models)
+        db.session.add_all(models)
+        db.session.commit()
 
         return {'save': False}
 
@@ -63,15 +81,21 @@ class PlayerList(Resource):
     def get(self):
         return jsonify({'players': Player.query.all()})
 
+    @staticmethod
+    def find_or_make_player(name):
+        existing_player = Player.query.filter_by(name=name).first()
+        if existing_player:
+            return existing_player, True
+        return Player(name=name), False
+
     def post(self):
         args = login_parser.parse_args()
         name = args['loginName']
-        existing_player = Player.query.filter_by(name=name).first()
-        if not existing_player:
-            nuplayer = Player(name=name)
-            db.session.add(nuplayer)
+        player, existed = self.find_or_make_player(name)
+        if not existed:
+            db.session.add(player)
             db.session.commit()
-            return jsonify({'player': nuplayer})
+            return jsonify({'player': player})
         else:
             return jsonify({'exists': True, 'player': existing_player})
 
@@ -109,6 +133,7 @@ class CardEventEndpoint(Resource):
         print(args)
         print("Card Event: {card_id}/{card_type}".format(**args))
         return {'status': 'ok'}
+
 
 api.add_resource(GameR, '/games/<game_id>')
 api.add_resource(GameList, '/games')
