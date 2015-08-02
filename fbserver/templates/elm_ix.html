@@ -34,7 +34,7 @@
                 JSON.stringify({"player_list": state.players}),
                 function (res) {
                     console.log(res);
-                    if(res.saved) {
+                    if (res.saved) {
                         gamerecmvc.ports.serverPort.send(res.msg);
                     }
                     else {
@@ -43,6 +43,5 @@
                     }
                 }, 'json')
     });
-
 </script>
 </html>

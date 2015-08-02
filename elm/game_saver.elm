@@ -12,6 +12,7 @@ import Json.Encode as Encode
 import String
 import Task exposing (..)
 import Signal exposing (Signal, Address, (<~))
+import Graphics.Element exposing (show)
 
 ---- MODEL ----
 type alias Model =
@@ -51,8 +52,7 @@ emptyModel =
 
 -- UPDATE
 type Action = NoOp |
-              Add |
-              UpdateField String |
+              Add String |
               Delete Int |
               DeleteComplete |
               EditingPlayer Int Bool |
@@ -63,7 +63,9 @@ type Action = NoOp |
 -- How we update our Model on a given Action?
 update : Action -> Model -> Model
 update action model =
-    let mod = if action == Add then 1 else -1
+    let mod = case action of
+                     Add _ -> 1
+                     _ -> -1
         plength = List.length model.players
         winMark = (plength + mod)//2
         assignWinners = (\i p -> {p | winner <- i < winMark})
@@ -71,19 +73,16 @@ update action model =
     case action of
       NoOp -> model
 
-      Add ->
-          let playersPlusAdd = if String.isEmpty model.field
+      Add playerName ->
+          let playersPlusAdd = if String.isEmpty playerName
                                  then model.players
-                                 else model.players ++ [newPlayer model.field (plength+1) False]
+                                 else model.players ++ [newPlayer playerName (plength+1) False]
               nuPlayers = List.indexedMap assignWinners playersPlusAdd
           in
           { model |
               field <- "",
               players <- nuPlayers
           }
-
-      UpdateField str ->
-          { model | field <- str }
 
       EditingPlayer pnum isEditing ->
           let updatePlayer t = if t.pnum == pnum then { t | editing <- isEditing }
@@ -114,7 +113,8 @@ update action model =
 -- VIEW
 view : Address Action -> Model -> Html
 view address model =
-    let saveDisabled = (List.length model.players) <= 1 || model.saveThis
+    let numPlayers = List.length model.players
+        saveDisabled = numPlayers <= 1 || model.saveThis || numPlayers >= 5
     in
     div
       [ class "fbrec-wrapper" ]
@@ -141,10 +141,11 @@ playerEntry address player nextPnum =
         pholder = if isDisabled then "Max Players" else
                    "Enter player " ++ toString nextPnum ++ " name"
         gameName = case nextPnum - 1 of
+                     1 -> "Enter a player name"
                      2 -> "1v1"
                      3 -> "King of the Hill"
                      4 -> "2v2"
-                     _ -> "Enter a player name"
+                     _ -> "At maximum players"
     in
     header
         [ id "header" ]
@@ -156,8 +157,7 @@ playerEntry address player nextPnum =
             , value player
             , disabled isDisabled
             , name "newPlayer"
-            , on "input" targetValue (Signal.message address << UpdateField)
-            , onEnter address Add
+            , onInputEnter address
             ]
             []
         ]
@@ -190,12 +190,14 @@ playerItem addr pnum playa =
           ]
       ]
 
-onEnter : Address a -> a -> Attribute
-onEnter address value =
-    on "keydown"
-      (Json.customDecoder keyCode is13)
-      (\_ -> Signal.message address value)
+onInputEnter : Address Action -> Attribute
+onInputEnter address =
+    on "keyup"
+      (checkKeyIsEnter `Json.andThen` (\_ -> targetValue))
+      (\v -> Signal.message address (Add v))
 
+checkKeyIsEnter : Json.Decoder ()
+checkKeyIsEnter = Json.customDecoder keyCode is13
 
 is13 : Int -> Result String ()
 is13 code =

@@ -12,8 +12,11 @@ def main():
 
     args = parser.parse_args()
 
-    if args.cmd == "db" and args.db_cmd == "create":
-        database.create_all()
+    if args.cmd == "db":
+        if args.db_cmd == "create":
+            database.create_all()
+        elif args.db_cmd == "destroy":
+            database.drop_all()
     elif args.cmd == "run":
         app.run(host='0.0.0.0', debug=True)
 
