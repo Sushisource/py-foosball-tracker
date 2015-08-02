@@ -101,3 +101,31 @@
 #savegame {
     width: 100%;;
 }
+
+.ui-autocomplete {
+    font-size: 30px;
+    list-style-type: none;
+    width: 30%;
+    border: solid 2px;
+    border-color: black;
+    padding: 0;
+}
+
+.ui-autocomplete li {
+    background-color: #627781;
+    padding-left: 10px;
+    border-bottom: solid 1px;
+    border-bottom-color: #d8d8d8;
+}
+
+.ui-autocomplete li:last-child {
+    border: none;
+}
+
+.ui-autocomplete li:hover {
+    background-color: #839fac;
+}
+
+.ui-helper-hidden-accessible {
+    visibility: hidden;
+}

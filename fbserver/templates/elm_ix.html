@@ -19,6 +19,7 @@
 <script src="/static/js/game_saver.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 <script src="/static/js/bootstrap/bootstrap.min.js"></script>
+<script src="/static/js/jquery-ui/jquery-ui.min.js"></script>
 <script type="text/javascript">
     // JQuery is stupid, and doesn't respect the types provided in $.post
     $.ajaxSetup({
@@ -28,7 +29,9 @@
     var div = document.getElementById('gamerec');
 
     var startingState = null;
-    var gamerecmvc = Elm.embed(Elm.GameSaver, div, {serverPort: ""});
+    var gamerecmvc = Elm.embed(Elm.GameSaver, div, {
+        serverPort: ""
+    });
     gamerecmvc.ports.setStorage.subscribe(function (state) {
         $.post("/historical_games",
                 JSON.stringify({"player_list": state.players}),
@@ -42,6 +45,20 @@
                         gamerecmvc.ports.serverPort.send("");
                     }
                 }, 'json')
+    });
+    $.get("players", function (data) {
+        var namesOnly = data.players.map(function (x) {
+            return x.name;
+        });
+        gamerecmvc.ports.playerNames.send(namesOnly);
+        $("#new-player").autocomplete({
+            source: namesOnly,
+            // get rid of the accessability thing that it keeps adding random
+            // divs to for no reason at all
+            create: function (e) {
+                $('.ui-helper-hidden-accessible').remove();
+            }
+        })
     });
 </script>
 </html>

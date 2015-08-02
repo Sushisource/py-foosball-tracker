@@ -141,6 +141,7 @@ playerEntry address player nextPnum =
         pholder = if isDisabled then "Max Players" else
                    "Enter player " ++ toString nextPnum ++ " name"
         gameName = case nextPnum - 1 of
+                     0 -> "Enter a player name"
                      1 -> "Enter a player name"
                      2 -> "1v1"
                      3 -> "King of the Hill"
