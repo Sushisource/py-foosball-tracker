@@ -73,6 +73,13 @@ class Player(db.Model, Serializeable):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     aliases = db.relationship("PlayerAlias", backref='player')
+    ranking = db.relationship("Ranking", backref='player', uselist=False)
+
+
+class Ranking(db.Model, Serializeable):
+    __tablename__ = "rankings"
+    player_id = db.Column(db.ForeignKey("players.id"))
+    ranking = db.Column(db.Integer, primary_key=True)
 
 
 class PlayerAlias(db.Model, Serializeable):

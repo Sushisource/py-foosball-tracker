@@ -11,10 +11,13 @@ team.
 import csv
 import sys
 import os
+import argparse
+import json
 # No clue why python is being an asshole about this
 sys.path.append(os.getcwd())
 from fbcore import player_list_to_win_loss_tuple
 from fbcore.ranker import TotalRanking
+import requests
 
 
 class CSVProcessor:
@@ -27,12 +30,17 @@ class CSVProcessor:
             for row in rdr:
                 if not row:
                     continue
-                [self.players.add(x.strip()) for x in row]
+                [self.players.add(x.strip().lower()) for x in row]
                 self.records.append(row)
 
 
 if __name__ == "__main__":
-    csvp = CSVProcessor(sys.argv[1])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("csv_file")
+    parser.add_argument("-p", "--post-to-srv", action="store_true", dest="post")
+    args = parser.parse_args()
+
+    csvp = CSVProcessor(args.csv_file)
 
     print(csvp.players)
 
@@ -42,8 +50,14 @@ if __name__ == "__main__":
 
     for record in csvp.records:
         wl_tup = player_list_to_win_loss_tuple(record)
-        print(wl_tup)
+        load = [{'name': p, 'winner': True} for p in wl_tup[0]]
+        load += [{'name': p, 'winner': False} for p in wl_tup[1]]
         ranker.process_game_record(*wl_tup)
+        if args.post:
+            load = {'player_list': load}
+            headers = {'Content-type': 'application/json'}
+            r = requests.post("http://localhost:5000/historical_games",
+                              data=json.dumps(load), headers=headers)
 
     print("Total games: {}".format(ranker.total_games))
     for player in ranker.player_rankings():

@@ -1,3 +1,7 @@
+body {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
 .yellow-team, .black-team {
     margin-right: 6px;
     margin-bottom: 3px;
@@ -128,4 +132,10 @@
 
 .ui-helper-hidden-accessible {
     visibility: hidden;
+}
+
+.leaderboard ol {
+    text-align: left;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 20px;
 }

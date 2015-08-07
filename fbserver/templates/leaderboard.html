@@ -1,0 +1,12 @@
+{% extends "elm_base.html" %}
+{% block title %}Foosball Leaderboard {% endblock %}
+{% block content %}
+    <div class="leaderboard jumbotron">
+        <h1>Foosball Leaderboard</h1>
+        <ol>
+            {% for player, ranking in player_rankings %}
+                <li>{{ player }} - {{ ranking }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+{% endblock %}

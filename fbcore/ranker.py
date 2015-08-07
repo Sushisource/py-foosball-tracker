@@ -2,9 +2,21 @@
 For running over game records to produce trueskill rankings
 """
 from trueskill import rate, TrueSkill
+import threading
 
 
 class TotalRanking:
+    __instance = None
+    lock = threading.Lock()
+
+    @classmethod
+    def instance(cls):
+        if not cls.__instance:
+            with cls.lock:
+                if not cls.__instance:
+                    cls.__instance = cls()
+        return cls.__instance
+
     def __init__(self):
         # All the Players involved in this ranking. Maps player names to
         # Ratings.
@@ -15,7 +27,8 @@ class TotalRanking:
 
     def add_player(self, player_name):
         """
-        Add a player to this raking. Players must have unique, consistent names.
+        Add a player to this raking. Players must have unique, consistent
+        names.
 
         :param player_name: The player name
         """
@@ -28,9 +41,10 @@ class TotalRanking:
         winning team.
         TODO: Update to include 3-team (KoTH)
 
-        :param team1: A list of player names on team one. Can contain one player
-        :param team2: A list of player names on team two. Can contain one player
-        :return:
+        :param team1: A list of player names on team one. Can contain one
+            player
+        :param team2: A list of player names on team two. Can contain one
+            player
         """
         if not isinstance(team1, list) or not isinstance(team2, list):
             raise ValueError("Arguments must be lists of players")

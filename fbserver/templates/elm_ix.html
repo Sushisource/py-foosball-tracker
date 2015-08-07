@@ -1,21 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" name="viewport"
-          content="width=device-width, initial-scale=1.0">
-    <title>Record Foosball Game</title>
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/static/css/foosball.css" rel="stylesheet">
-</head>
-<body>
-<div class="container">
+{% extends "elm_base.html" %}
+{% block title %}Foosball Leaderboard {% endblock %}
+{% block content %}
     <h2>Record your foosball game!</h2>
 
     <div class="jumbotron">
         <div id="gamerec"></div>
     </div>
-</div>
-</body>
+{% endblock %}
+{% block postbody %}
 <script src="/static/js/game_saver.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 <script src="/static/js/bootstrap/bootstrap.min.js"></script>
@@ -46,6 +38,8 @@
                     }
                 }, 'json')
     });
+
+    // Autocomplete
     $.get("players", function (data) {
         var namesOnly = data.players.map(function (x) {
             return x.name;
@@ -61,4 +55,4 @@
         })
     });
 </script>
-</html>
+{% endblock %}

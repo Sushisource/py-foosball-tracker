@@ -1,10 +1,11 @@
 import datetime
 
 from fbserver import app
+from fbserver.util import game_to_winners_losers
 from flask import render_template, jsonify, request
 from flask.ext.restful import Resource, Api, reqparse
-from fbserver.database import Game, Player, db, PlayerGame, HistoricalGame
-from fbcore import player_list_to_win_loss_tuple
+from fbserver.database import Game, Player, db, PlayerGame, HistoricalGame, \
+    Ranking
 from fbcore.ranker import TotalRanking
 
 api = Api(app)
@@ -36,17 +37,16 @@ def elm_index():
     return render_template('elm_ix.html')
 
 
+@app.route("/leaderboard")
+def leaderboard_rt():
+    return render_template("leaderboard.html",
+                           **{"player_rankings": TotalRanking
+                           .instance().player_rankings()})
+
+
 class Leaderboard(Resource):
     def get(self):
-        tr = TotalRanking()
-        all_games = HistoricalGame.query.all()
-        for hgame in all_games:
-            game = hgame.game
-            winners = [p.name for p in game.winners]
-            losers = [p.name for p in game.losers]
-            tr.process_game_record(winners, losers)
-
-        rankings = tr.player_rankings()
+        rankings = TotalRanking.instance().player_rankings()
         return jsonify({"rankings": [(p, str(r)) for p, r in rankings]})
 
 
@@ -96,8 +96,18 @@ class HistoricalGameList(Resource):
             pgame = PlayerGame(player=pmod[0], game=game, team=team)
             models.append(pgame)
 
+        # Update the ranking object & leaderboard table.
+        tr = TotalRanking.instance()
+        with tr.lock:
+            tr.process_game_record(*game_to_winners_losers(game))
+        # We just truncate and rebuild. Easier.
+        # db.session.query(Ranking).delete()
+        # for ranking in TotalRanking.instance().player_rankings():
+        #     r = Ranking(player_id=ranking.player_id)
+
         db.session.add_all(models)
         db.session.commit()
+
         return {'msg': "Saved game: {}".format(game.json), 'saved': True}
 
 
@@ -107,7 +117,7 @@ class PlayerList(Resource):
 
     @staticmethod
     def find_or_make_player(name):
-        name = name.lower()
+        name = name.lower().strip()
         existing_player = Player.query.filter_by(name=name).first()
         if existing_player:
             return existing_player, True
@@ -167,4 +177,4 @@ api.add_resource(PlayerList, '/players')
 api.add_resource(PlayerGameList, '/player_games')
 api.add_resource(PlayerGameR, '/player_games/<pgid>')
 api.add_resource(CardEventEndpoint, '/card')
-api.add_resource(Leaderboard, '/leaderboard')
+api.add_resource(Leaderboard, '/leaders')
