@@ -80,6 +80,8 @@ class Ranking(db.Model, Serializeable):
     __tablename__ = "rankings"
     player_id = db.Column(db.ForeignKey("players.id"))
     ranking = db.Column(db.Integer, primary_key=True)
+    mu = db.Column(db.Float)
+    sigma = db.Column(db.Float)
 
 
 class PlayerAlias(db.Model, Serializeable):

@@ -44,6 +44,21 @@ def leaderboard_rt():
                            .instance().player_rankings()})
 
 
+@app.route("/update_leaderboard")
+def update_lboard():
+    # We just truncate and rebuild. Easier.
+    db.session.query(Ranking).delete()
+    pos = 1
+    for pname, ranking in TotalRanking.instance().player_rankings():
+        player = Player.query.filter_by(name=pname).first()
+        r = Ranking(player_id=player.id, ranking=pos, mu=ranking.mu,
+                    sigma=ranking.sigma)
+        db.session.add(r)
+        pos += 1
+    db.session.commit()
+    return jsonify({'success': True})
+
+
 class Leaderboard(Resource):
     def get(self):
         rankings = TotalRanking.instance().player_rankings()
@@ -89,8 +104,10 @@ class HistoricalGameList(Resource):
         game = Game(date=datetime.datetime.now(), inprog=False, historical=True,
                     historical_game=hgame)
         models = [game, hgame]
+        players = []
         for player in plist:
             pmod = PlayerList.find_or_make_player(player['name'])
+            players.append(pmod[0])
             models.append(pmod[0])
             team = "winners" if player['winner'] else "losers"
             pgame = PlayerGame(player=pmod[0], game=game, team=team)
@@ -100,10 +117,6 @@ class HistoricalGameList(Resource):
         tr = TotalRanking.instance()
         with tr.lock:
             tr.process_game_record(*game_to_winners_losers(game))
-        # We just truncate and rebuild. Easier.
-        # db.session.query(Ranking).delete()
-        # for ranking in TotalRanking.instance().player_rankings():
-        #     r = Ranking(player_id=ranking.player_id)
 
         db.session.add_all(models)
         db.session.commit()
