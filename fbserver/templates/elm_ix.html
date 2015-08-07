@@ -36,6 +36,7 @@
                         // Empty string means don't save the model
                         gamerecmvc.ports.serverPort.send("");
                     }
+                    $("#new-player").autocomplete("close");
                 }, 'json')
     });
 
@@ -54,5 +55,12 @@
             }
         })
     });
+    // Make sure we close the fucking autcomplete on enter
+    $("#new-player").keypress(function (e) {
+        if (e.which == 13) {
+            $("#new-player").autocomplete("close");
+            return false;
+        }
+    })
 </script>
 {% endblock %}
