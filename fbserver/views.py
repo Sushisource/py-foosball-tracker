@@ -5,6 +5,7 @@ from flask import render_template, jsonify, request
 from flask.ext.restful import Resource, Api, reqparse
 from fbserver.database import Game, Player, db, PlayerGame, HistoricalGame
 from fbcore import player_list_to_win_loss_tuple
+from fbcore.ranker import TotalRanking
 
 api = Api(app)
 parser = reqparse.RequestParser()
@@ -26,12 +27,27 @@ card_event_parser.add_argument('card_type', type=str, required=True)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Todo: Eventually merge elm pages with other stuff or something
+    return render_template('elm_ix.html')
 
 
 @app.route('/elm')
 def elm_index():
     return render_template('elm_ix.html')
+
+
+class Leaderboard(Resource):
+    def get(self):
+        tr = TotalRanking()
+        all_games = HistoricalGame.query.all()
+        for hgame in all_games:
+            game = hgame.game
+            winners = [p.name for p in game.winners]
+            losers = [p.name for p in game.losers]
+            tr.process_game_record(winners, losers)
+
+        rankings = tr.player_rankings()
+        return jsonify({"rankings": [(p, str(r)) for p, r in rankings]})
 
 
 class GameR(Resource):
@@ -151,3 +167,4 @@ api.add_resource(PlayerList, '/players')
 api.add_resource(PlayerGameList, '/player_games')
 api.add_resource(PlayerGameR, '/player_games/<pgid>')
 api.add_resource(CardEventEndpoint, '/card')
+api.add_resource(Leaderboard, '/leaderboard')

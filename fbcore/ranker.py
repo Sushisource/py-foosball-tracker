@@ -35,6 +35,9 @@ class TotalRanking:
         if not isinstance(team1, list) or not isinstance(team2, list):
             raise ValueError("Arguments must be lists of players")
 
+        for player in team1 + team2:
+            self.add_player(player)
+
         try:
             t1_ratings = {p: self.players[p] for p in team1}
             t2_ratings = {p: self.players[p] for p in team2}

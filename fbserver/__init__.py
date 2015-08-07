@@ -13,7 +13,7 @@ class CustomJSONEncoder(JSONEncoder):
 
 
 app.config[
-    'SQLALCHEMY_DATABASE_URI'] = "postgres://foosball:foosball@localhost/fbdb"
+    'SQLALCHEMY_DATABASE_URI'] = "postgres://foosball:foosball@sjudge/fbdb"
 app.json_encoder = CustomJSONEncoder
 
 import fbserver.views

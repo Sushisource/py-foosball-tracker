@@ -40,6 +40,22 @@ class Game(db.Model, Serializeable):
     def players(self):
         return list(map(lambda pg: pg.player, self.player_games))
 
+    @property
+    def winners(self):
+        retme = []
+        for pgame in self.player_games:
+            if pgame.team == self.historical_game.winteam:
+                retme.append(pgame.player)
+        return retme
+
+    @property
+    def losers(self):
+        retme = []
+        for pgame in self.player_games:
+            if pgame.team != self.historical_game.winteam:
+                retme.append(pgame.player)
+        return retme
+
 
 class HistoricalGame(db.Model, Serializeable):
     __tablename__ = "historical_games"
@@ -51,17 +67,20 @@ class HistoricalGame(db.Model, Serializeable):
 
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'))
 
+
 class Player(db.Model, Serializeable):
     __tablename__ = "players"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     aliases = db.relationship("PlayerAlias", backref='player')
 
+
 class PlayerAlias(db.Model, Serializeable):
     __tablename__ = 'aliases'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     player_id = db.Column(db.ForeignKey("players.id"))
+
 
 class Score(db.Model, Serializeable):
     __tablename__ = "scores"

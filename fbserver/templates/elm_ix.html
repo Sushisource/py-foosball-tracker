@@ -50,7 +50,7 @@
         var namesOnly = data.players.map(function (x) {
             return x.name;
         });
-        gamerecmvc.ports.playerNames.send(namesOnly);
+
         $("#new-player").autocomplete({
             source: namesOnly,
             // get rid of the accessability thing that it keeps adding random
