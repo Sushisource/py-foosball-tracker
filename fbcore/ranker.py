@@ -33,7 +33,7 @@ class TotalRanking:
         :param player_name: The player name
         """
         if player_name not in self.players:
-            self.players[player_name] = self.ts_env.create_rating()
+            self.players[player_name] = {'ts': self.ts_env.create_rating(), 'win': 0, 'loss': 0}
 
     def process_game_record(self, team1, team2):
         """
@@ -52,16 +52,21 @@ class TotalRanking:
         for player in team1 + team2:
             self.add_player(player)
 
+        for player in team1:
+            self.players[player]['win'] += 1
+        for player in team2:
+            self.players[player]['loss'] += 1
+
         try:
-            t1_ratings = {p: self.players[p] for p in team1}
-            t2_ratings = {p: self.players[p] for p in team2}
+            t1_ratings = {p: self.players[p]['ts'] for p in team1}
+            t2_ratings = {p: self.players[p]['ts'] for p in team2}
         except KeyError as e:
             raise ValueError("Could not find a player: {}".format(e))
 
         new_rankings = self.ts_env.rate([t1_ratings, t2_ratings])
         for team in new_rankings:
             for name, newrating in team.items():
-                self.players[name] = newrating
+                self.players[name]['ts'] = newrating
         self.total_games += 1
 
     def player_rankings(self):
@@ -69,6 +74,6 @@ class TotalRanking:
         :return: Players, with their rankings, sorted by rank.
         """
         ranks = [(p, r) for p, r in self.players.items()]
-        ranks = sorted(ranks, key=lambda pr: self.ts_env.expose(pr[1]),
+        ranks = sorted(ranks, key=lambda pr: self.ts_env.expose(pr[1]['ts']),
                        reverse=True)
         return ranks
