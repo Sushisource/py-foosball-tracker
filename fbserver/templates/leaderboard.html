@@ -5,27 +5,29 @@
         <h1>Foosball Leaderboard</h1>
         <table class="table">
             <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Player</th>
-                    <th>Wins</th>
-                    <th>Losses</th>
-                    <th>TS Rating</th>
-                    <th>&nbsp;</th>
-                </tr>
+            <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>W/L Ratio</th>
+                <th>TS Rating</th>
+                <th>&nbsp;</th>
+            </tr>
             </thead>
             <tbody>
-                {% for player, ranking in player_rankings %}
-                    <tr>
-                        <td>{{loop.index}}</td>
-                        <td>{{player}}</td>
-                        <td>{{ranking.win}}</td>
-                        <td>{{ranking.loss}}</td>
-                        <td>{{'{0:0.2f}'.format(ranking.ts.mu - 3*ranking.ts.sigma)}}</td>
-                        <td>{{ranking.ts}}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>    
+            {% for player, ranking in player_rankings %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ player }}</td>
+                    <td>{{ ranking.win }}</td>
+                    <td>{{ ranking.loss }}</td>
+                    <td>{{ ranking.win / max(ranking.loss, 1) }}</td>
+                    <td>{{ '{0:0.2f}'.format(ranking.ts.mu - 3*ranking.ts.sigma) }}</td>
+                    <td>{{ ranking.ts }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
         </table>
     </div>
 {% endblock %}

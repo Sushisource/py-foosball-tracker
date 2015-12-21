@@ -9,6 +9,7 @@ def main():
     db_p = subp.add_parser("db")
     db_p.add_argument("db_cmd")
     run_p = subp.add_parser('run')
+    create_and_run_p = subp.add_parser('create_and_run')
 
     args = parser.parse_args()
 
@@ -18,6 +19,9 @@ def main():
         elif args.db_cmd == "destroy":
             database.drop_all()
     elif args.cmd == "run":
+        app.run(host='0.0.0.0', debug=True)
+    elif args.cmd == "create_and_run":
+        database.create_all()
         app.run(host='0.0.0.0', debug=True)
 
 

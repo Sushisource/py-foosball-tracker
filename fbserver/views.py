@@ -32,16 +32,12 @@ def index():
     return render_template('elm_ix.html')
 
 
-@app.route('/elm')
-def elm_index():
-    return render_template('elm_ix.html')
-
-
 @app.route("/leaderboard")
 def leaderboard_rt():
     return render_template("leaderboard.html",
                            **{"player_rankings": TotalRanking
-                           .instance().player_rankings()})
+                           .instance().player_rankings(),
+                              "max": max})
 
 
 @app.route("/update_leaderboard")
@@ -158,8 +154,8 @@ class PlayerGameList(Resource):
     def get(self):
         args = pgame_parser.parse_args()
         pgame = PlayerGame.query.filter_by(
-            player_id=args['player_id'],
-            game_id=args['game_id']).first()
+                player_id=args['player_id'],
+                game_id=args['game_id']).first()
         if pgame:
             return jsonify({'player_game': pgame})
         else:

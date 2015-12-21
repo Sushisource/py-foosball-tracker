@@ -11,7 +11,7 @@ import Json.Decode as Json exposing ((:=))
 import Json.Encode as Encode
 import String
 import Task exposing (..)
-import Signal exposing (Signal, Address, (<~))
+import Signal exposing (Signal, Address)
 import Graphics.Element exposing (show)
 
 ---- MODEL ----
@@ -20,6 +20,7 @@ type alias Model =
     , field : String
     , saveThis : Bool
     , srvrMsg : String
+    , lastPlayers: List Player
     }
 
 
@@ -48,16 +49,17 @@ emptyModel =
     , saveThis = False
     , field = ""
     , srvrMsg = ""
+    , lastPlayers = []
     }
 
 -- UPDATE
 type Action = NoOp |
               Add String |
               Delete Int |
-              DeleteComplete |
               EditingPlayer Int Bool |
               UpdatePlayer Int String |
               SaveGame |
+              LoadLastPlayers |
               ServerResp String
 
 -- How we update our Model on a given Action?
@@ -68,7 +70,7 @@ update action model =
                      _ -> -1
         plength = List.length model.players
         winMark = (plength + mod)//2
-        assignWinners = (\i p -> {p | winner <- i < winMark})
+        assignWinners = (\i p -> {p | winner = i < winMark})
     in
     case action of
       NoOp -> model
@@ -80,23 +82,23 @@ update action model =
               nuPlayers = List.indexedMap assignWinners playersPlusAdd
           in
           { model |
-              field <- "",
-              players <- nuPlayers
+              field = "",
+              players = nuPlayers
           }
 
       EditingPlayer pnum isEditing ->
-          let updatePlayer t = if t.pnum == pnum then { t | editing <- isEditing }
+          let updatePlayer t = if t.pnum == pnum then { t | editing = isEditing }
                                              else t
           in
-              { model | players <- List.map updatePlayer model.players }
+              { model | players = List.map updatePlayer model.players }
 
       UpdatePlayer pnum player ->
-          let updatePlayer t = if t.pnum == pnum then { t | name <- player } else t
+          let updatePlayer t = if t.pnum == pnum then { t | name = player } else t
           in
-              { model | players <- List.map updatePlayer model.players }
+              { model | players = List.map updatePlayer model.players }
 
       Delete pnum ->
-          { model | players <- List.indexedMap assignWinners
+          { model | players = List.indexedMap assignWinners
                                 (List.filter (\t -> t.pnum/=pnum) model.players) }
 
       SaveGame ->
@@ -105,16 +107,20 @@ update action model =
                     (Encode.object [ ("players",
                      Encode.list (List.map encodePlayer model.players) ) ])
           in
-          { model | saveThis <- True }
+          { model | saveThis = True }
 
-      ServerResp m -> if m /= "" then { emptyModel | srvrMsg <- m }
-                                 else { model | saveThis <- False }
+      LoadLastPlayers -> { model | players = model.lastPlayers }
+
+      ServerResp m -> if m /= "" then { emptyModel | srvrMsg = m,
+                                                     lastPlayers = model.players }
+                                 else { model | saveThis = False }
 
 -- VIEW
 view : Address Action -> Model -> Html
 view address model =
     let numPlayers = List.length model.players
         saveDisabled = numPlayers <= 1 || model.saveThis || numPlayers >= 5
+        lastPlayersDisabled = model.lastPlayers == []
     in
     div
       [ class "fbrec-wrapper" ]
@@ -129,6 +135,13 @@ view address model =
                                  onClick address SaveGame
                                ]
                                [text "Save Game!"],
+                        button [ id "lastPlayerLoad",
+                                 classList [("btn btn-info btn-lg", True),
+                                            ("disabled", lastPlayersDisabled)],
+                                 disabled lastPlayersDisabled,
+                                 onClick address LoadLastPlayers
+                               ]
+                               [text "Load players from last save"],
                         div [ class "alert alert-info",
                               hidden (model.srvrMsg == "") ] [text model.srvrMsg] ]
           ]
@@ -210,14 +223,14 @@ is13 code =
 -- wire the entire application together
 main : Signal Html
 main =
-  (view actions.address) <~ modelSig
+  Signal.map (view actions.address) modelSig
 
 
 -- manage the model of our application over time
 modelSig : Signal Model
 modelSig =
   Signal.foldp update emptyModel (Signal.merge actions.signal
-                                               (ServerResp <~ serverPort))
+                                   (Signal.map ServerResp serverPort))
 
 -- actions from user input
 actions : Signal.Mailbox Action

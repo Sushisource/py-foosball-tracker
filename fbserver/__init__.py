@@ -15,7 +15,7 @@ class CustomJSONEncoder(JSONEncoder):
         return JSONEncoder.default(self, obj)
 
 
-host = os.environ.get("FB_HOST", 'localhost')
+host = os.environ.get("FB_DB_HOST", 'localhost')
 app.config[
     'SQLALCHEMY_DATABASE_URI'] = "postgres://foosball:foosball@{}/fbdb".format(
     host)

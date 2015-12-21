@@ -1,6 +1,7 @@
-FROM python:3.4.3
+FROM python:3.5
 
 EXPOSE 5000
+ENV FB_DB_HOST=postgres
 
 RUN mkdir /srv/fb-tracker
 WORKDIR /srv/fb-tracker
@@ -8,8 +9,7 @@ COPY requirements.txt ./
 RUN pip install -r requirements.txt
 
 COPY fbserver ./fbserver
-COPY fb_trueskill ./fb_trueskill
+COPY fbcore ./fbcore
 COPY main.py ./
 
-RUN ["ls", "-la", "."]
-CMD ["python3", "main.py", "run"]
+CMD ["python3", "main.py", "create_and_run"]

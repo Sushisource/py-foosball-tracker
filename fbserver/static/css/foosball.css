@@ -102,8 +102,9 @@ body {
     width: 15%;
 }
 
-#savegame {
-    width: 100%;;
+#savegame, #lastPlayerLoad {
+    width: 100%;
+    margin-bottom: 5px;
 }
 
 .ui-autocomplete {
