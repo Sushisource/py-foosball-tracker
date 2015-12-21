@@ -59,7 +59,7 @@ type Action = NoOp |
               EditingPlayer Int Bool |
               UpdatePlayer Int String |
               SaveGame |
-              LoadLastPlayers |
+              LoadLastPlayers Bool |
               ServerResp String
 
 -- How we update our Model on a given Action?
@@ -67,8 +67,11 @@ update : Action -> Model -> Model
 update action model =
     let mod = case action of
                      Add _ -> 1
-                     _ -> -1
-        plength = List.length model.players
+                     Delete _ -> -1
+                     _ -> 0
+        plength = case action of
+                    LoadLastPlayers _ -> List.length model.lastPlayers
+                    _ -> List.length model.players
         winMark = (plength + mod)//2
         assignWinners = (\i p -> {p | winner = i < winMark})
     in
@@ -109,7 +112,12 @@ update action model =
           in
           { model | saveThis = True }
 
-      LoadLastPlayers -> { model | players = model.lastPlayers }
+      -- If param is true, then invert the winners
+      LoadLastPlayers inverted ->
+        if inverted then { model |
+            players = List.indexedMap assignWinners (invertWinners model.lastPlayers) }
+        else { model | players = model.lastPlayers }
+
 
       ServerResp m -> if m /= "" then { emptyModel | srvrMsg = m,
                                                      lastPlayers = model.players }
@@ -128,22 +136,34 @@ view address model =
           [ id "fb_record" ]
           [ lazy3 playerEntry address model.field ((List.length model.players)+1)
           , lazy2 playerList address model.players
-          , footer [] [ button [ id "savegame",
-                                 classList [("btn btn-success btn-lg", True),
-                                            ("disabled", saveDisabled)],
-                                 disabled saveDisabled,
-                                 onClick address SaveGame
-                               ]
-                               [text "Save Game!"],
-                        button [ id "lastPlayerLoad",
-                                 classList [("btn btn-info btn-lg", True),
-                                            ("disabled", lastPlayersDisabled)],
-                                 disabled lastPlayersDisabled,
-                                 onClick address LoadLastPlayers
-                               ]
-                               [text "Load players from last save"],
-                        div [ class "alert alert-info",
-                              hidden (model.srvrMsg == "") ] [text model.srvrMsg] ]
+          , footer [] [
+                   button [ id "savegame",
+                            classList [("col-md-6 btn btn-success btn-lg", True),
+                                       ("disabled", saveDisabled)],
+                            disabled saveDisabled,
+                            onClick address SaveGame
+                          ]
+                          [text "Save Game!"],
+                   div [ class "row" ] [
+                   div [ class "col-md-6" ] [
+                   button [ id "lastPlayerLoad",
+                            classList [("btn btn-info btn-lg", True),
+                                       ("disabled", lastPlayersDisabled)],
+                            disabled lastPlayersDisabled,
+                            onClick address (LoadLastPlayers False)
+                          ]
+                          [text "Load players from last save"]],
+                   div [ class "col-md-6" ] [
+                   button [ id "lastPlayerInvLoad",
+                            classList [("btn btn-info btn-lg", True),
+                                       ("disabled", lastPlayersDisabled)],
+                            disabled lastPlayersDisabled,
+                            onClick address (LoadLastPlayers True)
+                          ]
+                          [text "Load opposite winners from last save"]]
+                   ],
+                   div [ class "alert alert-info",
+                         hidden (model.srvrMsg == "") ] [text model.srvrMsg] ]
           ]
       ]
 
@@ -216,6 +236,14 @@ checkKeyIsEnter = Json.customDecoder keyCode is13
 is13 : Int -> Result String ()
 is13 code =
   if code == 13 then Ok () else Err "not the right key code"
+
+invertWinners : List a -> List a
+invertWinners plist =
+    case plist of
+        [p1, p2] -> [p2, p1]
+        [p1, p2, p3] -> [p3, p1, p2]
+        [p1, p2, p3, p4] -> [p3, p4, p1, p2]
+        other -> other
 
 -- WIRING
 ---- INPUTS ----
